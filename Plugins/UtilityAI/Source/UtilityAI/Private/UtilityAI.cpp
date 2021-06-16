@@ -2,6 +2,8 @@
 
 #include "UtilityAI.h"
 
+DEFINE_LOG_CATEGORY(LogUtilityAI)
+
 #define LOCTEXT_NAMESPACE "FUtilityAIModule"
 
 void FUtilityAIModule::StartupModule()

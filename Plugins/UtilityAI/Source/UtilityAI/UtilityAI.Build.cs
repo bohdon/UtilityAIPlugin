@@ -26,6 +26,8 @@ public class UtilityAI : ModuleRules
 			new string[]
 			{
 				"Core",
+				"AIModule",
+				"GameplayTags",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
