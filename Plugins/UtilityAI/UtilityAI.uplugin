@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UtilityAI",
+	"Description": "Allows the creation of AIs using utility scoring techniques",
+	"Category": "Other",
+	"CreatedBy": "Bohdon Sayre",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "UtilityAI",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
