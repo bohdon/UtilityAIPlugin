@@ -22,6 +22,9 @@ DerivedDataCache/*
 # Visual Studio database file
 *.VC.db
 
+# Rider for Unreal project files
+.idea/
+
 # Compiled Object files
 *.slo
 *.lo
