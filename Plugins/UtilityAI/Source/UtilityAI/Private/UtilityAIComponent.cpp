@@ -51,6 +51,13 @@ void UUtilityAIComponent::BeginPlay()
 	}
 }
 
+void UUtilityAIComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	DestroyActionInstances();
+}
+
 void UUtilityAIComponent::CreateActionInstance(TSubclassOf<UUtilityAIAction> ActionClass)
 {
 	if (!ActionClass || HasAction(ActionClass))
@@ -62,30 +69,53 @@ void UUtilityAIComponent::CreateActionInstance(TSubclassOf<UUtilityAIAction> Act
 	if (NewAction)
 	{
 		Actions.Add(NewAction);
+
+		NewAction->Initialize();
 	}
+}
+
+void UUtilityAIComponent::DestroyActionInstances()
+{
+	for (UUtilityAIAction* Action : Actions)
+	{
+		Action->Deinitialize();
+		Action->ConditionalBeginDestroy();
+	}
+
+	Actions.Empty();
 }
 
 UUtilityAIAction* UUtilityAIComponent::SelectAction()
 {
 	UUtilityAIAction* BestAction = nullptr;
-	float BestScore = 0.f;
 
 	for (UUtilityAIAction* Action : Actions)
 	{
-		if (Action->CanCalculateScore())
+		if (Action->AreTagRequirementsMet() && Action->CanCalculateScore())
 		{
 			Action->Score = Action->CalculateScore();
 			UE_LOG(LogUtilityAI, VeryVerbose, TEXT("Score: %s: %f"), *Action->GetName(), Action->Score);
 
-			if (Action->CanExecute() && Action->Score > BestScore)
+			if (!Action->CanExecute() || Action->Score <= SMALL_NUMBER)
+			{
+				continue;
+			}
+
+			// either no best action, or score is better, or score is same but priority is better
+			if (!BestAction || Action->Score > BestAction->Score ||
+				(FMath::IsNearlyEqual(Action->Score, BestAction->Score) && Action->Priority > BestAction->Priority))
 			{
 				BestAction = Action;
-				BestScore = Action->Score;
 			}
 		}
 	}
 
 	return BestAction;
+}
+
+bool UUtilityAIComponent::ShouldInterruptCurrentAction(UUtilityAIAction* NewAction)
+{
+	return !CurrentAction || NewAction->Priority > CurrentAction->Priority;
 }
 
 void UUtilityAIComponent::OnCurrentActionFinished()
@@ -106,12 +136,12 @@ void UUtilityAIComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	UUtilityAIAction* BestAction = SelectAction();
 
-	if (CurrentAction != BestAction)
+	if (BestAction && CurrentAction != BestAction && ShouldInterruptCurrentAction(BestAction))
 	{
 		if (CurrentAction && CurrentAction->IsExecuting())
 		{
 			CurrentAction->OnFinishedEvent.RemoveAll(this);
-			CurrentAction->Abort();
+			CurrentAction->StartAbort();
 			// TODO: wait for abort?
 		}
 
@@ -120,7 +150,7 @@ void UUtilityAIComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		if (CurrentAction)
 		{
 			CurrentAction->OnFinishedEvent.AddUObject(this, &UUtilityAIComponent::OnCurrentActionFinished);
-			CurrentAction->Execute();
+			CurrentAction->StartExecute();
 		}
 
 		// TODO: on action change event

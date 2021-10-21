@@ -49,15 +49,20 @@ protected:
 	UUtilityAIAction* CurrentAction;
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void CreateActionInstance(TSubclassOf<UUtilityAIAction> ActionClass);
+
+	void DestroyActionInstances();
 
 	/** Select an action to perform */
 	UUtilityAIAction* SelectAction();
 
+	/** Return true if a new action should interrupt the current action */
+	virtual bool ShouldInterruptCurrentAction(UUtilityAIAction* NewAction);
+
 	void OnCurrentActionFinished();
 
 public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 };
