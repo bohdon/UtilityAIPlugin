@@ -41,6 +41,11 @@ UUtilityAIAction* UUtilityAIComponent::GetAction(TSubclassOf<UUtilityAIAction> A
 	return nullptr;
 }
 
+void UUtilityAIComponent::GetAllActions(TArray<UUtilityAIAction*>& OutActions) const
+{
+	OutActions = Actions;
+}
+
 void UUtilityAIComponent::BeginPlay()
 {
 	Super::BeginPlay();

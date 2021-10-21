@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	UUtilityAIAction* GetAction(TSubclassOf<UUtilityAIAction> ActionClass) const;
 
+	/** Return all utility action instances */
+	void GetAllActions(TArray<UUtilityAIAction*>& OutActions) const;
+
 protected:
 	/** The instances of every action currently available */
 	UPROPERTY(Transient)

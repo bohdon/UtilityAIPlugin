@@ -2,21 +2,41 @@
 
 #include "UtilityAI.h"
 
+
+#if WITH_GAMEPLAY_DEBUGGER
+#include "GameplayDebugger.h"
+#include "GameplayDebugger/GameplayDebugger_UtilityAI.h"
+#endif
+
 DEFINE_LOG_CATEGORY(LogUtilityAI)
 
 #define LOCTEXT_NAMESPACE "FUtilityAIModule"
 
 void FUtilityAIModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+#if WITH_GAMEPLAY_DEBUGGER
+	IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+
+	GameplayDebuggerModule.RegisterCategory(
+		"UtilityAI", IGameplayDebugger::FOnGetCategory::CreateStatic(&FGameplayDebugger_UtilityAI::MakeInstance),
+		EGameplayDebuggerCategoryState::EnabledInGameAndSimulate);
+
+	GameplayDebuggerModule.NotifyCategoriesChanged();
+#endif
 }
 
 void FUtilityAIModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+#if WITH_GAMEPLAY_DEBUGGER
+	if (IGameplayDebugger::IsAvailable())
+	{
+		IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+		GameplayDebuggerModule.UnregisterCategory("UtilityAI");
+		GameplayDebuggerModule.NotifyCategoriesChanged();
+	}
+#endif
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FUtilityAIModule, UtilityAI)
