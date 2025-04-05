@@ -21,9 +21,7 @@
 
 UBehaviorTreeComponent* UUtilityAIBehaviorStatics::GetOwnerBehaviorComponent(UUtilityAIAction* ActionOwner)
 {
-	ensureAsRuntimeWarning(
-		(ActionOwner != nullptr) &&
-		(ActionOwner->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || Cast<UDynamicClass>(ActionOwner->GetClass())));
+	ensureAsRuntimeWarning(ActionOwner && ActionOwner->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint));
 
 	AAIController* AIController = ActionOwner->GetAIController();
 	UBehaviorTreeComponent* BehaviorComp = AIController ? Cast<UBehaviorTreeComponent>(AIController->GetBrainComponent()) : nullptr;
