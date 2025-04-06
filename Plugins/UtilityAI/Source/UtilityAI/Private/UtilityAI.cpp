@@ -5,7 +5,7 @@
 
 #if WITH_GAMEPLAY_DEBUGGER
 #include "GameplayDebugger.h"
-#include "GameplayDebugger/GameplayDebugger_UtilityAI.h"
+#include "GameplayDebugger/GameplayDebuggerCategory_UtilityAI.h"
 #endif
 
 DEFINE_LOG_CATEGORY(LogUtilityAI)
@@ -16,11 +16,9 @@ void FUtilityAIModule::StartupModule()
 {
 #if WITH_GAMEPLAY_DEBUGGER
 	IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
-
 	GameplayDebuggerModule.RegisterCategory(
-		"UtilityAI", IGameplayDebugger::FOnGetCategory::CreateStatic(&FGameplayDebugger_UtilityAI::MakeInstance),
+		"UtilityAI", IGameplayDebugger::FOnGetCategory::CreateStatic(&FGameplayDebuggerCategory_UtilityAI::MakeInstance),
 		EGameplayDebuggerCategoryState::EnabledInGameAndSimulate);
-
 	GameplayDebuggerModule.NotifyCategoriesChanged();
 #endif
 }

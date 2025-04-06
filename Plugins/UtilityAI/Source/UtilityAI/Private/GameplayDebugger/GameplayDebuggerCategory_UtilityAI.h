@@ -11,10 +11,10 @@
 /**
  * Gameplay debugger category for Utility AI
  */
-class FGameplayDebugger_UtilityAI : public FGameplayDebuggerCategory
+class FGameplayDebuggerCategory_UtilityAI : public FGameplayDebuggerCategory
 {
 public:
-	FGameplayDebugger_UtilityAI();
+	FGameplayDebuggerCategory_UtilityAI();
 
 	static TSharedRef<FGameplayDebuggerCategory> MakeInstance();
 	virtual void CollectData(APlayerController* OwnerPC, AActor* DebugActor) override;

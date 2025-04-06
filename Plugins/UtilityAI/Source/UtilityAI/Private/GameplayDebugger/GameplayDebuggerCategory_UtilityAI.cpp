@@ -1,7 +1,7 @@
 ﻿// Copyright Bohdon Sayre. All Rights Reserved.
 
 
-#include "GameplayDebugger_UtilityAI.h"
+#include "GameplayDebuggerCategory_UtilityAI.h"
 
 #if WITH_GAMEPLAY_DEBUGGER_MENU
 #include "UtilityAIComponent.h"
@@ -9,23 +9,23 @@
 #include "GameFramework/Pawn.h"
 
 
-FGameplayDebugger_UtilityAI::FGameplayDebugger_UtilityAI()
+FGameplayDebuggerCategory_UtilityAI::FGameplayDebuggerCategory_UtilityAI()
 {
 	SetDataPackReplication<FRepData>(&DataPack);
 }
 
-TSharedRef<FGameplayDebuggerCategory> FGameplayDebugger_UtilityAI::MakeInstance()
+TSharedRef<FGameplayDebuggerCategory> FGameplayDebuggerCategory_UtilityAI::MakeInstance()
 {
-	return MakeShareable(new FGameplayDebugger_UtilityAI());
+	return MakeShareable(new FGameplayDebuggerCategory_UtilityAI());
 }
 
-void FGameplayDebugger_UtilityAI::FRepData::Serialize(FArchive& Ar)
+void FGameplayDebuggerCategory_UtilityAI::FRepData::Serialize(FArchive& Ar)
 {
 	Ar << CompName;
 	Ar << ActionsDesc;
 }
 
-void FGameplayDebugger_UtilityAI::CollectData(APlayerController* OwnerPC, AActor* DebugActor)
+void FGameplayDebuggerCategory_UtilityAI::CollectData(APlayerController* OwnerPC, AActor* DebugActor)
 {
 	if (DebugActor)
 	{
@@ -68,7 +68,7 @@ void FGameplayDebugger_UtilityAI::CollectData(APlayerController* OwnerPC, AActor
 	}
 }
 
-void FGameplayDebugger_UtilityAI::DrawData(APlayerController* OwnerPC, FGameplayDebuggerCanvasContext& CanvasContext)
+void FGameplayDebuggerCategory_UtilityAI::DrawData(APlayerController* OwnerPC, FGameplayDebuggerCanvasContext& CanvasContext)
 {
 	CanvasContext.Printf(TEXT("Utility Component: {yellow}%s"), *DataPack.CompName);
 
