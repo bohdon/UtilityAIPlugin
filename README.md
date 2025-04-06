@@ -3,12 +3,12 @@ An Unreal Engine plugin for AI decision making through modular utilities and con
 
 ## Features
 
-- `UtilityAIAction` defines a possible choice. Calculate a score from 0..1 to determine when it's best to take this action.
-- Define and debug individual scoring elements, e.g. distance to target, speed of approach, time since last action taken.
-- Group actions in a `UtilityAIActionSet` and define scoring factors for each to create relative differences in priority.
+- `UtilityAIAction` defines a choice. Calculate a 0..1 score to determine when it's best to take this action.
+- Define and debug individual scoring elements, e.g. distance to target, speed of approach, time since last action.
+- Group actions via `UtilityAIActionSet` and set scoring factors to create relative differences in priority.
 - Filter actions by gameplay tags, built to work with ability system.
-- Actions can run any logic, but `UtilityAIBehaviorAction` can easily run single-purpose easier-to-design behavior trees.
-- Control when action scores are frozen, or changing actions is forbidden, with tag-based interruption rules.
+- `UtilityAIBehaviorAction` can easily run single-purpose behavior trees which are easier to design.
+- Control when action scores frozen, or changing actions is forbidden, with tag-based interruption rules.
 
 At its core, actions make up each possible branch or decision an AI can make, which are very similar to abilities or single behaviors. Designing the execution of those actions is easy to do with existing tools like behavior trees or gameplay abilities, but organizing the decision making layer is difficult and tedious.
 
