@@ -4,17 +4,54 @@
 #include "UtilityAIComponent.h"
 
 #include "AIController.h"
+#include "UtilityAIActionSet.h"
 #include "UtilityAIModule.h"
 
 
 UUtilityAIComponent::UUtilityAIComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.TickInterval = 0.025f;
+
+	// this component should be activated after possessing a valid pawn,
+	// so actions can initialize with full context
+	bAutoActivate = false;
 }
 
 AAIController* UUtilityAIComponent::GetAIController() const
 {
 	return Cast<AAIController>(GetOwner());
+}
+
+void UUtilityAIComponent::AddDefaultActions()
+{
+	for (const UUtilityAIActionSet* ActionSet : DefaultActionSets)
+	{
+		AddActionsFromSet(ActionSet);
+	}
+}
+
+void UUtilityAIComponent::AddAction_Implementation(TSubclassOf<UUtilityAIAction> ActionClass)
+{
+	CreateActionInstance(ActionClass);
+}
+
+void UUtilityAIComponent::AddActionsFromSet_Implementation(const UUtilityAIActionSet* ActionSet)
+{
+	for (const auto& Elem : ActionSet->Actions)
+	{
+		CreateActionInstance(Elem.Key, Elem.Value);
+	}
+}
+
+void UUtilityAIComponent::DeinitializeActions()
+{
+	for (UUtilityAIAction* Action : Actions)
+	{
+		Action->Deinitialize();
+		Action->ConditionalBeginDestroy();
+	}
+	Actions.Empty();
 }
 
 bool UUtilityAIComponent::HasAction(TSubclassOf<UUtilityAIAction> ActionClass) const
@@ -46,48 +83,48 @@ void UUtilityAIComponent::GetAllActions(TArray<UUtilityAIAction*>& OutActions) c
 	OutActions = Actions;
 }
 
-void UUtilityAIComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	for (const TSubclassOf<UUtilityAIAction>& ActionClass : IntrinsicActions)
-	{
-		CreateActionInstance(ActionClass);
-	}
-}
-
 void UUtilityAIComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
+	DeinitializeActions();
 
-	DestroyActionInstances();
+	Super::EndPlay(EndPlayReason);
 }
 
-void UUtilityAIComponent::CreateActionInstance(TSubclassOf<UUtilityAIAction> ActionClass)
+void UUtilityAIComponent::Activate(bool bReset)
+{
+	Super::Activate(bReset);
+
+	AddDefaultActions();
+}
+
+void UUtilityAIComponent::Deactivate()
+{
+	DeinitializeActions();
+
+	Super::Deactivate();
+}
+
+UUtilityAIAction* UUtilityAIComponent::CreateActionInstance(TSubclassOf<UUtilityAIAction> ActionClass, float ScoreWeight)
 {
 	if (!ActionClass || HasAction(ActionClass))
 	{
 		// action already instanced
-		return;
+		return nullptr;
 	}
+
 	UUtilityAIAction* NewAction = NewObject<UUtilityAIAction>(this, ActionClass, NAME_None, RF_Transient);
 	if (NewAction)
 	{
+		if (ScoreWeight >= 0.f)
+		{
+			NewAction->ScoreWeight = ScoreWeight;
+		}
+
 		Actions.Add(NewAction);
 
 		NewAction->Initialize();
 	}
-}
-
-void UUtilityAIComponent::DestroyActionInstances()
-{
-	for (UUtilityAIAction* Action : Actions)
-	{
-		Action->Deinitialize();
-		Action->ConditionalBeginDestroy();
-	}
-
-	Actions.Empty();
+	return NewAction;
 }
 
 UUtilityAIAction* UUtilityAIComponent::SelectAction()
