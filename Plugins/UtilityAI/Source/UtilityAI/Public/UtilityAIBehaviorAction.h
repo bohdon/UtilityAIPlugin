@@ -32,11 +32,11 @@ public:
 
 	/** If true, don't loop the behavior when run, let it execute once then finish. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bSingleRunBehavior;
+	bool bSingleRunBehavior = false;
 
 	/** If true, finish this action when the behavior finishes running, requires bSingleRun to be true. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bFinishWhenBehaviorStops;
+	bool bFinishWhenBehaviorStops = false;
 
 	/** The blackboard key in which to store a reference to this utility action */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -79,7 +79,7 @@ protected:
 	/** The current or last behavior being run by this action */
 	TWeakObjectPtr<UBehaviorTree> CurrentBehavior;
 
-	bool bIsBehaviorRunning;
+	bool bIsBehaviorRunning = false;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

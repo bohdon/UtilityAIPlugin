@@ -9,21 +9,6 @@
 class UUtilityAIAction;
 
 
-USTRUCT(BlueprintType)
-struct FUtilityAIActionSetEntry
-{
-	GENERATED_BODY()
-
-	/** The action to provide. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UUtilityAIAction> Action;
-
-	/** The scale applied to this actions scoring, to allow weighting it relative to other actions. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = "0.01", UIMax = "20"))
-	float ScoreWeight = 1.f;
-};
-
-
 /**
  * A collection of actions and their relative score weighting.
  */

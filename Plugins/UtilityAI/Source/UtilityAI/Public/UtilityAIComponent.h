@@ -23,6 +23,18 @@ class UTILITYAI_API UUtilityAIComponent : public UActorComponent
 public:
 	UUtilityAIComponent();
 
+	/** If any of these tags are present, the AI is considered busy and cannot change actions. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagContainer BusyTags;
+
+	/**
+	 * Actions must be higher than this threshold above the current action in order to be selected.
+	 * Note that if multiple actions have the same max score, they will not be able to replace each
+	 * other by achieving identical max scores.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = 0))
+	float ScoreHysteresisThreshold = 0.02f;
+
 	UFUNCTION(BlueprintPure)
 	AAIController* GetAIController() const;
 
@@ -57,8 +69,19 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	UUtilityAIAction* GetAction(TSubclassOf<UUtilityAIAction> ActionClass) const;
 
-	/** Return all utility action instances */
-	void GetAllActions(TArray<UUtilityAIAction*>& OutActions) const;
+	/** Return all action instances. */
+	const TArray<UUtilityAIAction*>& GetAllActions() const { return Actions; }
+
+	UFUNCTION(BlueprintCallable)
+	void AbortCurrentAction();
+
+	/** Return true if the owner or current action is busy. If true, the AI is unable to change actions. */
+	UFUNCTION(BlueprintPure)
+	virtual bool IsBusy() const;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Activate(bool bReset = false) override;
+	virtual void Deactivate() override;
 
 protected:
 	/** The instances of every action currently available */
@@ -69,18 +92,14 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UUtilityAIAction> CurrentAction;
 
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Activate(bool bReset = false) override;
-	virtual void Deactivate() override;
-
 	/** Create a new action instance. If ScoreWeight is > 0, override the action's default score weight. */
 	UUtilityAIAction* CreateActionInstance(TSubclassOf<UUtilityAIAction> ActionClass, float ScoreWeight = -1.f);
 
 	/** Select an action to perform */
 	UUtilityAIAction* SelectAction();
 
-	/** Return true if a new action should interrupt the current action */
-	virtual bool ShouldInterruptCurrentAction(UUtilityAIAction* NewAction);
+	/** Return true if a new action can be started immediately. */
+	virtual bool CanActivateAction(UUtilityAIAction* NewAction);
 
 	void OnCurrentActionFinished();
 

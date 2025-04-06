@@ -11,10 +11,7 @@
 
 
 UUtilityAIBehaviorAction::UUtilityAIBehaviorAction(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer),
-	  bSingleRunBehavior(false),
-	  bFinishWhenBehaviorStops(false),
-	  bIsBehaviorRunning(false)
+	: Super(ObjectInitializer)
 {
 	UtilityActionKey.AddObjectFilter(this, GET_MEMBER_NAME_CHECKED(UUtilityAIBehaviorAction, UtilityActionKey),
 	                                 UUtilityAIAction::StaticClass());
@@ -27,8 +24,7 @@ UBlackboardData* UUtilityAIBehaviorAction::GetBlackboardAsset() const
 
 void UUtilityAIBehaviorAction::InitBlackboardKeys()
 {
-	const UBlackboardData* BBData = GetBlackboardAsset();
-	if (BBData)
+	if (const UBlackboardData* BBData = GetBlackboardAsset())
 	{
 		UtilityActionKey.ResolveSelectedKey(*BBData);
 	}
@@ -131,10 +127,7 @@ void UUtilityAIBehaviorAction::Initialize()
 
 void UUtilityAIBehaviorAction::Execute()
 {
-	if (RunDefaultBehaviorTree())
-	{
-		CommitCooldown();
-	}
+	RunDefaultBehaviorTree();
 }
 
 void UUtilityAIBehaviorAction::Abort()

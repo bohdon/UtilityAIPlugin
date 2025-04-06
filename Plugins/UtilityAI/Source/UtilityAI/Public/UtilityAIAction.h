@@ -28,20 +28,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
 	FGameplayTagContainer OwnedTags;
 
+	/** Interrupt actions that have any of these tags, even from a busy state. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
+	FGameplayTagContainer InterruptActionsWithTags;
+
+	/** A multiplier applied the calculated score, effectively determining the max score for this action. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
+	float ScoreWeight = 1.f;
+
 	/**
-	 * The priority of this action.
-	 * Higher priorities will abort lower priorities when an action is selected.
+	 * Should the score be frozen when the action is active? Useful to prevent selection hysteresis.
+	 * Disable for long actions that should keep re-evaluating themselves.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
-	int32 Priority;
+	bool bFreezeScoreWhenActive = true;
 
 	/** The scoring method to use for this action. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
-	EUtilityAIScoringMethod ScoringMethod;
-
-	/** A multiplier applied to the calculated score of this action affecting it's weight */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
-	float ScoreWeight;
+	EUtilityAIScoringMethod ScoringMethod = EUtilityAIScoringMethod::Function;
 
 	/** The AIController must have all of these tags for this action to be executed */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
@@ -55,17 +59,37 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
 	FGameplayTagQuery TagQuery;
 
-	/** The duration of the cooldown to apply when this action is executed */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cooldown")
-	float Cooldown;
+protected:
+	/** The current score for this action. */
+	UPROPERTY(Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	float Score = 0.f;
 
-	/** The cooldown tags to use for this action */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cooldown")
-	FGameplayTagContainer CooldownTags;
+	/** Is the score locked at its current value? Useful to prevent scores from dropping while active. */
+	UPROPERTY(Transient, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bIsScoreFrozen = false;
 
-	/** The last known utility score calculated for this action */
-	UPROPERTY(Transient)
-	float Score;
+	/** Detailed information about the last known score calculated for this action. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	FUtilityAIScoringElements ScoringElements;
+
+public:
+	/** Return the current score for this action. */
+	FORCEINLINE float GetScore() const { return Score; }
+
+	/** Return the current score elements for this action. */
+	FORCEINLINE const FUtilityAIScoringElements& GetScoringElements() const { return ScoringElements; }
+
+	/** The number of times this action has been executed. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	int32 ExecuteCount = 0;
+
+	/** If > 0, the time at which this action was last executed. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	float LastExecuteTime = -1000;
+
+	/** If > 0, the time at which this action was last finished. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	float LastFinishTime = -1000;
 
 	/** Return the UtilityAIComponent that owns this action */
 	UFUNCTION(BlueprintPure, Category = "AI|UtilityAI")
@@ -84,6 +108,12 @@ public:
 	/** Return true if this action is currently allowed to calculate its score */
 	virtual bool CanCalculateScore() const;
 
+	/**
+	 * Calculate and store the score for this action.
+	 * Access the score afterward with `GetScore`.
+	 */
+	void UpdateScore();
+
 	/** Calculate the score for this action given the current context */
 	float CalculateScore();
 
@@ -92,6 +122,9 @@ public:
 
 	/** Perform a custom calculation to determine the current score of this action */
 	virtual float CalculateCustomScore();
+
+	/** Calculate a score from a set of scores. */
+	virtual float CombineScores(const TArray<float>& InScores, EUtilityAIScoreOperation Operation);
 
 	/** Return true if this action is currently allowed to be executed */
 	virtual bool CanExecute() const;
@@ -127,12 +160,22 @@ public:
 	/** Tick the action while it is executing */
 	virtual void Tick(float DeltaTime);
 
-	/** Return the cooldown tags to use for this action. */
-	virtual const FGameplayTagContainer* GetCooldownTags() const;
+	/**
+	 * Return true if the action is busy and should not be interrupted, even by higher-scoring actions.
+	 * Can be interrupted by InterruptActionsWithTags.
+	 */
+	virtual bool IsBusy() const { return false; }
 
-	/** Commit the cooldown for this action. */
+	UFUNCTION(BlueprintPure, Category = "AI|UtilityAI")
+	virtual bool IsScoreFrozen() const { return bIsScoreFrozen || (bFreezeScoreWhenActive && IsExecuting()); }
+
+	/** Freeze the current score so it doesn't update. */
 	UFUNCTION(BlueprintCallable, Category = "AI|UtilityAI")
-	virtual void CommitCooldown();
+	void FreezeScore();
+
+	/** Unfreeze the current score, allowing it to update. */
+	UFUNCTION(BlueprintCallable, Category = "AI|UtilityAI")
+	void UnfreezeScore();
 
 	/** Finish the action. */
 	UFUNCTION(BlueprintCallable, Category = "AI|UtilityAI")
@@ -154,6 +197,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Deinitialize", ScriptName = "Deinitialize"))
 	void Deinitialize_BP();
 
+	/** Calculate scoring elements to be combined using the specified operation. */
+	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "CalculateElementScores", ScriptName = "CalculateElementScores"))
+	void CalculateElementScores_BP(TArray<FUtilityAIScore>& Scores, EUtilityAIScoreOperation& Operation);
+
 	/** Perform a custom calculation to determine the current score of this action */
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "CalculateScore", ScriptName = "CalculateScore"))
 	float CalculateScore_BP();
@@ -173,6 +220,7 @@ public:
 protected:
 	bool bHasBlueprintInitialize;
 	bool bHasBlueprintDeinitialize;
+	bool bHasBlueprintCalculateElementScores;
 	bool bHasBlueprintCalculateScore;
 	bool bHasBlueprintExecute;
 	bool bHasBlueprintAbort;

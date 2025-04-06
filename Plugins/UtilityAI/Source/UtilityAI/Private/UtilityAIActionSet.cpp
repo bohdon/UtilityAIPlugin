@@ -8,19 +8,19 @@
 
 void UUtilityAIActionSet::SortByWeight()
 {
+	// sort by name first, for stability when scores match
 	Actions.KeySort([&](const TSubclassOf<UUtilityAIAction>& A, const TSubclassOf<UUtilityAIAction>& B)
 	{
 		if (!A || !B)
 		{
 			return !!A;
 		}
-		const float MaxScoreA = Actions.FindChecked(A);
-		const float MaxScoreB = Actions.FindChecked(B);
-		if (MaxScoreA != MaxScoreB)
-		{
-			return MaxScoreA > MaxScoreB;
-		}
 		return A->GetName().Compare(B->GetName()) < 0;
+	});
+
+	Actions.ValueSort([&](const float A, const float B)
+	{
+		return A > B;
 	});
 }
 

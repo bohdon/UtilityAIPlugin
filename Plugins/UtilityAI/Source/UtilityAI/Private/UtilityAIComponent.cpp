@@ -4,6 +4,7 @@
 #include "UtilityAIComponent.h"
 
 #include "AIController.h"
+#include "GameplayTagAssetInterface.h"
 #include "UtilityAIActionSet.h"
 #include "UtilityAIModule.h"
 
@@ -78,9 +79,20 @@ UUtilityAIAction* UUtilityAIComponent::GetAction(TSubclassOf<UUtilityAIAction> A
 	return nullptr;
 }
 
-void UUtilityAIComponent::GetAllActions(TArray<UUtilityAIAction*>& OutActions) const
+bool UUtilityAIComponent::IsBusy() const
 {
-	OutActions = Actions;
+	if (const IGameplayTagAssetInterface* OwnerTagInterface = Cast<IGameplayTagAssetInterface>(GetOwner()))
+	{
+		if (OwnerTagInterface->HasAnyMatchingGameplayTags(BusyTags))
+		{
+			return true;
+		}
+	}
+	if (CurrentAction && CurrentAction->IsBusy())
+	{
+		return true;
+	}
+	return false;
 }
 
 void UUtilityAIComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -133,31 +145,42 @@ UUtilityAIAction* UUtilityAIComponent::SelectAction()
 
 	for (UUtilityAIAction* Action : Actions)
 	{
-		if (Action->AreTagRequirementsMet() && Action->CanCalculateScore())
+		Action->UpdateScore();
+
+		if (!Action->CanExecute())
 		{
-			Action->Score = Action->CalculateScore();
-			UE_LOG(LogUtilityAI, VeryVerbose, TEXT("Score: %s: %f"), *Action->GetName(), Action->Score);
+			continue;
+		}
 
-			if (!Action->CanExecute() || Action->Score <= SMALL_NUMBER)
-			{
-				continue;
-			}
+		if (!BestAction)
+		{
+			BestAction = Action;
+			continue;
+		}
 
-			// either no best action, or score is better, or score is same but priority is better
-			if (!BestAction || Action->Score > BestAction->Score ||
-				(FMath::IsNearlyEqual(Action->Score, BestAction->Score) && Action->Priority > BestAction->Priority))
-			{
-				BestAction = Action;
-			}
+		const float ScoreToBeat = BestAction->GetScore() + (BestAction->IsExecuting() ? ScoreHysteresisThreshold : 0.f);
+		if (Action->GetScore() > ScoreToBeat)
+		{
+			BestAction = Action;
 		}
 	}
 
 	return BestAction;
 }
 
-bool UUtilityAIComponent::ShouldInterruptCurrentAction(UUtilityAIAction* NewAction)
+bool UUtilityAIComponent::CanActivateAction(UUtilityAIAction* NewAction)
 {
-	return !CurrentAction || NewAction->Priority > CurrentAction->Priority;
+	// when busy, don't allow starting a new action, even if no action is active
+	return !IsBusy() || (CurrentAction && CurrentAction->OwnedTags.HasAny(NewAction->InterruptActionsWithTags));
+}
+
+void UUtilityAIComponent::AbortCurrentAction()
+{
+	if (CurrentAction && CurrentAction->IsExecuting())
+	{
+		CurrentAction->OnFinishedEvent.RemoveAll(this);
+		CurrentAction->StartAbort();
+	}
 }
 
 void UUtilityAIComponent::OnCurrentActionFinished()
@@ -171,21 +194,20 @@ void UUtilityAIComponent::OnCurrentActionFinished()
 }
 
 
-void UUtilityAIComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                        FActorComponentTickFunction* ThisTickFunction)
+void UUtilityAIComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (!IsActive())
+	{
+		return;
+	}
+
 	UUtilityAIAction* BestAction = SelectAction();
 
-	if (BestAction && CurrentAction != BestAction && ShouldInterruptCurrentAction(BestAction))
+	if (BestAction && BestAction != CurrentAction && CanActivateAction(BestAction))
 	{
-		if (CurrentAction && CurrentAction->IsExecuting())
-		{
-			CurrentAction->OnFinishedEvent.RemoveAll(this);
-			CurrentAction->StartAbort();
-			// TODO: wait for abort?
-		}
+		AbortCurrentAction();
 
 		CurrentAction = BestAction;
 
