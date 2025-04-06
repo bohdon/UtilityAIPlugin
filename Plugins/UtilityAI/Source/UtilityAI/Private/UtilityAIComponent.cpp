@@ -4,7 +4,7 @@
 #include "UtilityAIComponent.h"
 
 #include "AIController.h"
-#include "UtilityAI.h"
+#include "UtilityAIModule.h"
 
 
 UUtilityAIComponent::UUtilityAIComponent()

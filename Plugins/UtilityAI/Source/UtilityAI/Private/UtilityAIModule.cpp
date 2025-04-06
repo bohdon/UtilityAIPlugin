@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "UtilityAI.h"
+#include "UtilityAIModule.h"
 
 
 #if WITH_GAMEPLAY_DEBUGGER

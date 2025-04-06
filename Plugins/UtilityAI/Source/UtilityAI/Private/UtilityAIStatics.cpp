@@ -3,7 +3,7 @@
 
 #include "UtilityAIStatics.h"
 
-#include "UtilityAI.h"
+#include "UtilityAIModule.h"
 
 
 float UUtilityAIStatics::CombineWeightedScores(TArray<float> Scores, TArray<float> Weights)

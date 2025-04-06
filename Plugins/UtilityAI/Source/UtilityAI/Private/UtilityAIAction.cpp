@@ -5,7 +5,7 @@
 
 #include "AIController.h"
 #include "GameplayTagAssetInterface.h"
-#include "UtilityAI.h"
+#include "UtilityAIModule.h"
 #include "UtilityAIComponent.h"
 
 
