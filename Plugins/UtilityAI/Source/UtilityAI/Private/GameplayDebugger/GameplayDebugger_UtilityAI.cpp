@@ -3,9 +3,10 @@
 
 #include "GameplayDebugger_UtilityAI.h"
 
-#if WITH_GAMEPLAY_DEBUGGER
-
+#if WITH_GAMEPLAY_DEBUGGER_MENU
 #include "UtilityAIComponent.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
 
 
 FGameplayDebugger_UtilityAI::FGameplayDebugger_UtilityAI()
@@ -33,7 +34,7 @@ void FGameplayDebugger_UtilityAI::CollectData(APlayerController* OwnerPC, AActor
 		const TInlineComponentArray<UUtilityAIComponent*> UtilityAIComponents(DebugController);
 		if (UtilityAIComponents.Num() > 0)
 		{
-			UUtilityAIComponent* UtilityAI = UtilityAIComponents[0];
+			const UUtilityAIComponent* UtilityAI = UtilityAIComponents[0];
 
 			DataPack.CompName = UtilityAI->GetName();
 
@@ -107,4 +108,4 @@ void FGameplayDebugger_UtilityAI::DrawData(APlayerController* OwnerPC, FGameplay
 	}
 }
 
-#endif // WITH_GAMEPLAY_DEBUGGER
+#endif

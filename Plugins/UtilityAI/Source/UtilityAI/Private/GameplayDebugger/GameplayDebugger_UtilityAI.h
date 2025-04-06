@@ -2,7 +2,7 @@
 
 #pragma once
 
-#if WITH_GAMEPLAY_DEBUGGER
+#if WITH_GAMEPLAY_DEBUGGER_MENU
 
 #include "CoreMinimal.h"
 #include "GameplayDebuggerCategory.h"
@@ -32,4 +32,4 @@ protected:
 	FRepData DataPack;
 };
 
-#endif // WITH_GAMEPLAY_DEBUGGER
+#endif
